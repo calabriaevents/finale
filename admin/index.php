@@ -399,7 +399,7 @@ try {
                                 <td class="py-3 px-4 text-gray-600"><?php echo formatDate($article['created_at']); ?></td>
                                 <td class="py-3 px-4">
                                     <div class="flex items-center space-x-2">
-                                        <a href="../articolo.php?slug=<?php echo $article['slug']; ?>"
+                                        <a href="../it/articolo.php?slug=<?php echo $article['slug']; ?>"
                                            class="text-blue-600 hover:text-blue-700" title="Visualizza">
                                             <i data-lucide="eye" class="w-4 h-4"></i>
                                         </a>

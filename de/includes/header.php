@@ -1,5 +1,6 @@
 <?php
 // Header Deutsch - Passione Calabria
+require_once __DIR__ . '/../../includes/language_switcher.php';
 ?>
 <!-- Header Fisso - Deutsche Version -->
 <header id="main-header" style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; z-index: 999999 !important; background: linear-gradient(to right, #2563eb, #14b8a6, #f59e0b) !important; display: block !important; visibility: visible !important; opacity: 1 !important;" class="relative z-[999] text-white shadow-lg">
@@ -12,25 +13,8 @@
                     <span>Entdecken Sie Kalabrien</span>
                 </div>
                 
-                <!-- Language Flags -->
-                <div class="flex items-center space-x-2">
-                    <span class="text-xs text-blue-200 mr-3">Sprache:</span>
-                    <a href="../it/index.php" class="px-2 py-1 bg-white bg-opacity-10 rounded text-sm hover:bg-opacity-20 transition-colors" title="Italiano">
-                        🇮🇹 IT
-                    </a>
-                    <a href="../en/index.php" class="px-2 py-1 bg-white bg-opacity-10 rounded text-sm hover:bg-opacity-20 transition-colors" title="English">
-                        🇺🇸 EN
-                    </a>
-                    <a href="../fr/index.php" class="px-2 py-1 bg-white bg-opacity-10 rounded text-sm hover:bg-opacity-20 transition-colors" title="Français">
-                        🇫🇷 FR
-                    </a>
-                    <a href="../de/index.php" class="px-2 py-1 bg-white bg-opacity-20 rounded text-sm font-medium hover:bg-opacity-30 transition-colors" title="Deutsch">
-                        🇩🇪 DE
-                    </a>
-                    <a href="../es/index.php" class="px-2 py-1 bg-white bg-opacity-10 rounded text-sm hover:bg-opacity-20 transition-colors" title="Español">
-                        🇪🇸 ES
-                    </a>
-                </div>
+                <!-- Language Flags - Dynamic -->
+                <?php echo renderLanguageSwitcher($current_lang, $current_file, $base_path); ?>
                 
                 <div class="hidden sm:block">
                     <span>Willkommen bei Passione Calabria</span>
@@ -62,9 +46,9 @@
                 <div class="hidden lg:flex items-center justify-center flex-1">
                     <div class="flex items-center space-x-8">
                         <a href="index.php" style="color: white; text-decoration: none; font-weight: 500; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Startseite</a>
-                        <a href="kategorien.php" style="color: white; text-decoration: none; font-weight: 500; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Kategorien</a>
-                        <a href="provinzen.php" style="color: white; text-decoration: none; font-weight: 500; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Provinzen</a>
-                        <a href="karte.php" style="color: white; text-decoration: none; font-weight: 500; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Karte</a>
+                        <a href="categories.php" style="color: white; text-decoration: none; font-weight: 500; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Kategorien</a>
+                        <a href="provinces.php" style="color: white; text-decoration: none; font-weight: 500; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Provinzen</a>
+                        <a href="map.php" style="color: white; text-decoration: none; font-weight: 500; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Karte</a>
                         <a href="geschaeft-anmelden.php" style="background: #f59e0b; color: white; padding: 0.5rem 1rem; border-radius: 9999px; text-decoration: none; font-weight: 500; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#d97706'" onmouseout="this.style.backgroundColor='#f59e0b'">Geschäft anmelden</a>
                         <a href="../admin/" style="background: #dc2626; color: white; padding: 0.5rem 1rem; border-radius: 9999px; text-decoration: none; font-weight: 500; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#b91c1c'" onmouseout="this.style.backgroundColor='#dc2626'">Admin</a>
                     </div>
@@ -84,9 +68,9 @@
         <div id="mobile-menu" class="lg:hidden hidden" style="background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(4px);">
             <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
                 <a href="index.php" style="color: white; text-decoration: none; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Startseite</a>
-                <a href="kategorien.php" style="color: white; text-decoration: none; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Kategorien</a>
-                <a href="provinzen.php" style="color: white; text-decoration: none; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Provinzen</a>
-                <a href="karte.php" style="color: white; text-decoration: none; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Karte</a>
+                <a href="categories.php" style="color: white; text-decoration: none; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Kategorien</a>
+                <a href="provinces.php" style="color: white; text-decoration: none; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Provinzen</a>
+                <a href="map.php" style="color: white; text-decoration: none; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Karte</a>
                 <a href="geschaeft-anmelden.php" style="color: white; text-decoration: none; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Geschäft anmelden</a>
                 <a href="../admin/" style="color: white; text-decoration: none; padding: 0.5rem 0; transition: color 0.2s;" onmouseover="this.style.color='#fde047'" onmouseout="this.style.color='white'">Admin</a>
             </div>

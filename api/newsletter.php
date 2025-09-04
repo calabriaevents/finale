@@ -26,7 +26,7 @@ if (count($_SESSION[$rate_limit_key]) >= $rate_limit) {
 
 header('Content-Type: application/json');
 // CORS più restrittivo - solo dal dominio principale
-$allowed_origins = [SITE_URL, 'http://localhost', 'https://localhost'];
+$allowed_origins = [SITE_URL];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowed_origins)) {
     header("Access-Control-Allow-Origin: $origin");
