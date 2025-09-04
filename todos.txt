@@ -1,0 +1,80 @@
+[
+  {
+    "id": "copy-missing-files-to-en",
+    "task": "Copiare 16 file mancanti da IT a EN (articoli.php, articolo.php, categoria.php, ecc.)",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "copy-missing-files-to-fr",
+    "task": "Copiare file mancanti da IT a FR per completare traduzioni",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "copy-missing-files-to-de",
+    "task": "Copiare file mancanti da IT a DE per completare traduzioni",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "copy-missing-files-to-es",
+    "task": "Copiare file mancanti da IT a ES per completare traduzioni",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "fix-translation-manager",
+    "task": "Sistemare gestione traduzioni admin per vedere e scaricare tutti i file",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "update-sql-ionos",
+    "task": "Aggiornare e sistemare il file database_finale_ionos.sql",
+    "status": "completed",
+    "priority": "medium"
+  },
+  {
+    "id": "fix-header-language-links",
+    "task": "Sistemare i link del cambio lingua nel header per funzionare in tutte le cartelle",
+    "status": "in_progress",
+    "priority": "medium"
+  },
+  {
+    "id": "fix-broken-links",
+    "task": "Controllare e sistemare tutti i link rotti nel progetto",
+    "status": "in_progress",
+    "priority": "medium"
+  },
+  {
+    "id": "remove-unused-files",
+    "task": "Eliminare tutti i file inutilizzati, test e temporanei",
+    "status": "pending",
+    "priority": "medium"
+  },
+  {
+    "id": "check-system-bugs",
+    "task": "Fare debugging completo del sistema per identificare tutti i bug",
+    "status": "pending",
+    "priority": "medium"
+  },
+  {
+    "id": "test-all-languages",
+    "task": "Testare funzionamento di tutte le 5 lingue (it, en, fr, de, es)",
+    "status": "pending",
+    "priority": "medium"
+  },
+  {
+    "id": "verify-admin-italian",
+    "task": "Verificare che la sezione admin rimanga sempre in italiano",
+    "status": "pending",
+    "priority": "low"
+  },
+  {
+    "id": "final-preview-test",
+    "task": "Test finale completo della preview dopo tutte le sistemazioni",
+    "status": "pending",
+    "priority": "low"
+  }
+]
