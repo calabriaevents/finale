@@ -72,6 +72,24 @@
     "priority": "low"
   },
   {
+    "id": "create-mysql-database",
+    "task": "Creare file database MySQL ottimizzato per hosting Ionos",
+    "status": "in_progress",
+    "priority": "high"
+  },
+  {
+    "id": "remove-localhost-references",
+    "task": "Trovare e rimuovere tutti i riferimenti a localhost dal progetto",
+    "status": "pending",
+    "priority": "high"
+  },
+  {
+    "id": "remove-old-database-files",
+    "task": "Eliminare i vecchi file database SQLite dopo creazione MySQL",
+    "status": "pending",
+    "priority": "medium"
+  },
+  {
     "id": "final-preview-test",
     "task": "Test finale completo della preview dopo tutte le sistemazioni",
     "status": "pending",

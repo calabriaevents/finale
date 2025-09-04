@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../../includes/language_switcher.php';
 ?>
 <!-- Header Fisso - Riscrittura Completa -->
-<header id="main-header" style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; z-index: 999999 !important; background: linear-gradient(to right, #2563eb, #14b8a6, #f59e0b) !important; display: block !important; visibility: visible !important; opacity: 1 !important;" class="relative z-[999] text-white shadow-lg"
+<header id="main-header" style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; z-index: 999999 !important; background: linear-gradient(to right, #2563eb, #14b8a6, #f59e0b) !important; display: block !important; visibility: visible !important; opacity: 1 !important;" class="relative z-[999] text-white shadow-lg">
     <!-- Top Bar -->
     <div style="background: rgba(0, 0, 0, 0.1); padding: 0.5rem 0;">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
