@@ -4,7 +4,7 @@ define('SITE_NAME', 'Passione Calabria');
 define('SITE_DESCRIPTION', 'La tua guida alla Calabria');
 if (!defined('SITE_URL')) {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)) ? "https://" : "http://";
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $host = $_SERVER['HTTP_HOST'] ?? 'passionecalabria.com';
     $script_dir = str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
     // Rimuovi 'includes/' dal path se presente, dato che config.php è in 'includes'
     $base_path = rtrim(preg_replace('/\/includes\/?$/', '/', $script_dir), '/');
@@ -12,9 +12,9 @@ if (!defined('SITE_URL')) {
 }
 define('ADMIN_EMAIL', 'admin@passionecalabria.it');
 
-// Configurazione database - SQLite per sviluppo locale, MySQL per produzione
-define('DB_TYPE', 'sqlite'); // 'mysql' per produzione, 'sqlite' per sviluppo locale
-define('DB_HOST', 'localhost'); // Modifica con il tuo host MySQL di Ionos (solo per MySQL)
+// Configurazione database - MySQL per produzione Ionos
+define('DB_TYPE', 'mysql'); // 'mysql' per produzione, 'sqlite' per sviluppo locale
+define('DB_HOST', 'db5014504718.hosting-data.io'); // Host MySQL di Ionos - MODIFICA con il tuo host database
 define('DB_NAME', 'passione_calabria'); // Modifica con il nome del tuo database (solo per MySQL)
 define('DB_USERNAME', 'your_username'); // Modifica con il tuo username MySQL (solo per MySQL)
 define('DB_PASSWORD', 'your_password'); // Modifica con la tua password MySQL (solo per MySQL)
@@ -79,13 +79,7 @@ if (!function_exists('sanitize')) {
     }
 }
 
-if (!function_exists('sanitizeSQL')) {
-    function sanitizeSQL($input) {
-        // Per MySQL, usa la funzione nativa di escape
-        // Nota: è preferibile usare prepared statements
-        return mysqli_real_escape_string($GLOBALS['mysqli_connection'] ?? null, $input);
-    }
-}
+// sanitizeSQL rimossa - si usano prepared statements PDO per la sicurezza SQL
 
 if (!function_exists('generateCSRFToken')) {
     function generateCSRFToken() {
