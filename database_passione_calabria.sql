@@ -238,7 +238,14 @@ CREATE TABLE `cities` (
   `latitude` decimal(10,8) DEFAULT NULL,
   `longitude` decimal(11,8) DEFAULT NULL,
   `description` text COLLATE utf8mb4_unicode_ci,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  `hero_image` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `hero_subtitle` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `gallery_images` json DEFAULT NULL,
+  `google_maps_link` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `events_app_link` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_featured` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
