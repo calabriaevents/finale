@@ -254,7 +254,6 @@ function closeExperienceModal() {
 }
 
 function loadMoreExperiences() {
-    // TODO: Implementare caricamento di più esperienze con AJAX
     alert('Funzione in sviluppo: caricamento di tutte le esperienze');
 }
 

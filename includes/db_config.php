@@ -16,7 +16,7 @@ function getDatabaseConfig() {
         $host = 'db5018301966.hosting-data.io';
         $dbname = 'dbs14504718';
         $username = 'dbu1167357';
-        $password = 'Barboncino692@@'; // TODO: Move to environment variable immediately!
+        $password = 'YOUR_DATABASE_PASSWORD'; // Inserisci qui la tua password
     }
     
     return [
