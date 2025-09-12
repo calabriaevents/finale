@@ -19,14 +19,52 @@ if (!$city) {
     exit;
 }
 
-// Carica articoli della città
+// Carica tutti gli articoli per la città
 $articles = $db->getArticlesByCity($cityId);
-$articleCount = $db->getArticleCountByCity($cityId);
+$articleCount = count($articles);
 
-// Carica altre città della stessa provincia
-$relatedCities = array_filter($db->getCitiesByProvince($city['province_id']), function($c) use ($cityId) {
-    return $c['id'] != $cityId;
-});
+// Carica tutte le categorie
+$allCategories = $db->getCategories();
+
+// Raggruppa articoli per categoria
+$articlesByCategory = [];
+foreach ($articles as $article) {
+    $articlesByCategory[$article['category_id']][] = $article;
+}
+
+// Determina l'immagine hero per la città (usa la featured image dell'articolo più recente)
+$heroImage = 'assets/images/default-city-hero.jpg'; // Un'immagine di fallback
+if (!empty($articles)) {
+    $heroImage = $articles[0]['featured_image'] ?? $heroImage;
+}
+
+// Aggrega la galleria di immagini da tutti gli articoli della città
+$galleryImages = [];
+foreach ($articles as $article) {
+    if (!empty($article['gallery_images'])) {
+        $images = json_decode($article['gallery_images'], true);
+        if (is_array($images)) {
+            $galleryImages = array_merge($galleryImages, $images);
+        }
+    }
+}
+// Rimuovi eventuali duplicati
+$galleryImages = array_unique($galleryImages);
+
+// Carica impostazioni per la sezione App
+$settings = $db->getSettings();
+$appSettings = [];
+foreach ($settings as $setting) {
+    if (strpos($setting['key'], 'app_') === 0 || strpos($setting['key'], 'play_') === 0 || strpos($setting['key'], 'suggerisci_evento') === 0) {
+        $appSettings[$setting['key']] = $setting['value'];
+    }
+}
+
+// Costruisci il link di Google Maps
+$googleMapsLink = '';
+if ($city['latitude'] && $city['longitude']) {
+    $googleMapsLink = 'https://www.google.com/maps/dir/?api=1&destination=' . $city['latitude'] . ',' . $city['longitude'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -82,259 +120,168 @@ $relatedCities = array_filter($db->getCitiesByProvince($city['province_id']), fu
         </div>
     </div>
 
-    <!-- City Hero -->
-    <div class="bg-gradient-to-r from-blue-600 via-teal-500 to-yellow-500 text-white py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div class="text-6xl mb-6">🏙️</div>
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">
+    <!-- City Hero with Image -->
+    <section class="relative bg-gray-800 text-white py-24 overflow-hidden">
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('<?php echo htmlspecialchars($heroImage); ?>');"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 text-shadow-lg">
                 <?php echo htmlspecialchars($city['name']); ?>
             </h1>
-            <p class="text-xl text-blue-100 max-w-3xl mx-auto mb-8">
-                <?php echo htmlspecialchars($city['description'] ?: 'Città della provincia di ' . $city['province_name']); ?>
+            <p class="text-xl text-gray-200 mb-8 max-w-3xl mx-auto text-shadow">
+                <?php echo htmlspecialchars($city['description'] ?: 'Scopri le meraviglie di ' . $city['name'] . ', nel cuore della provincia di ' . $city['province_name']); ?>
             </p>
             <div class="flex justify-center gap-4 flex-wrap">
-                <span class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full">
+                <span class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full border border-white/30">
                     <i data-lucide="map-pin" class="w-4 h-4 inline mr-1"></i>
                     <?php echo htmlspecialchars($city['province_name']); ?>
                 </span>
-                <span class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full">
+                <span class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full border border-white/30">
                     <i data-lucide="file-text" class="w-4 h-4 inline mr-1"></i>
-                    <?php echo $articleCount; ?> <span><?php echo $articleCount == 1 ? 'articolo' : 'articoli'; ?></span>
+                    <?php echo $articleCount; ?> <span>Contenuti</span>
                 </span>
-                <?php if ($city['latitude'] && $city['longitude']): ?>
-                <span class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full">
-                    <i data-lucide="navigation" class="w-4 h-4 inline mr-1"></i>
-                    <?php echo number_format($city['latitude'], 4); ?>, <?php echo number_format($city['longitude'], 4); ?>
-                </span>
-                <?php endif; ?>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Main Content -->
-    <main class="py-12">
+    <main class="py-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
-            <?php if ($city['latitude'] && $city['longitude']): ?>
-            <!-- City Map -->
-            <div class="mb-16">
-                <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">
-                    <span>Posizione di</span> <?php echo htmlspecialchars($city['name']); ?>
-                </h2>
-                <div class="bg-white rounded-2xl shadow-lg p-8">
-                    <div class="mb-6">
-                        <p class="text-gray-600 text-center mb-4">
-                            Esplora la posizione di <?php echo htmlspecialchars($city['name']); ?> sulla mappa interattiva.
-                        </p>
-                    </div>
-                    <div id="city-map" class="w-full h-96 bg-gray-100 rounded-lg overflow-hidden">
-                        <!-- Mappa Leaflet città specifica -->
-                    </div>
-                    <div class="mt-4 text-center">
-                        <p class="text-sm text-gray-500">
-                            <span>Coordinate</span>: <?php echo $city['latitude']; ?>, <?php echo $city['longitude']; ?>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
-            
-            <!-- Articles Section -->
-            <?php if (!empty($articles)): ?>
-            <div class="mb-16">
-                <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">
-                    <span>Articoli di</span> <?php echo htmlspecialchars($city['name']); ?>
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <?php foreach ($articles as $article): ?>
-                    <article class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group">
-                        <!-- Article Image -->
-                        <div class="aspect-[4/3] bg-gradient-to-br from-blue-500 to-teal-600 relative overflow-hidden">
-                            <?php if ($article['featured_image']): ?>
-                            <img src="<?php echo htmlspecialchars($article['featured_image']); ?>" 
-                                 alt="<?php echo htmlspecialchars($article['title']); ?>"
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                            <?php else: ?>
-                            <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-teal-600"></div>
-                            <?php endif; ?>
-                            
-                            <div class="absolute inset-0 bg-black/40"></div>
-                            
-                            <!-- Article Meta -->
-                            <div class="absolute top-4 left-4 right-4">
-                                <div class="flex justify-between items-start">
-                                    <span class="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm">
-                                        <?php echo htmlspecialchars($article['category_name'] ?? 'Articolo'); ?>
-                                    </span>
-                                    <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                        <?php echo $article['views']; ?> <span>visite</span>
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            <div class="absolute bottom-4 left-4 right-4 text-white">
-                                <h3 class="text-xl font-bold mb-2 line-clamp-2">
-                                    <?php echo htmlspecialchars($article['title']); ?>
-                                </h3>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <!-- Main Content Column -->
+                <div class="lg:col-span-2 space-y-16">
+
+                    <!-- Events App Section -->
+                    <section>
+                        <div class="bg-white rounded-2xl shadow-lg p-8">
+                             <div class="flex flex-col sm:flex-row justify-center items-center gap-8">
+                                <?php if (!empty($appSettings['app_store_link']) && !empty($appSettings['app_store_image'])): ?>
+                                <a href="<?php echo htmlspecialchars($appSettings['app_store_link']); ?>" target="_blank" class="transition-transform hover:scale-105">
+                                    <img src="<?php echo htmlspecialchars($appSettings['app_store_image']); ?>" alt="Scarica su App Store" class="h-14 w-auto">
+                                </a>
+                                <?php endif; ?>
+
+                                <?php if (!empty($appSettings['play_store_link']) && !empty($appSettings['play_store_image'])): ?>
+                                <a href="<?php echo htmlspecialchars($appSettings['play_store_link']); ?>" target="_blank" class="transition-transform hover:scale-105">
+                                    <img src="<?php echo htmlspecialchars($appSettings['play_store_image']); ?>" alt="Scarica su Google Play" class="h-14 w-auto">
+                                </a>
+                                <?php endif; ?>
                             </div>
                         </div>
+                    </section>
 
-                        <!-- Article Content -->
-                        <div class="p-6">
-                            <p class="text-gray-600 mb-4 line-clamp-3">
-                                <?php echo htmlspecialchars($article['excerpt']); ?>
-                            </p>
-                            
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center space-x-4 text-sm text-gray-500">
-                                    <span class="flex items-center">
-                                        <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
-                                        <?php echo formatDate($article['created_at']); ?>
-                                    </span>
-                                    <span class="flex items-center">
-                                        <i data-lucide="user" class="w-4 h-4 mr-1"></i>
-                                        <?php echo htmlspecialchars($article['author']); ?>
-                                    </span>
+                    <!-- Photo Gallery Section -->
+                    <?php if (!empty($galleryImages)): ?>
+                    <section>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-8 flex items-center">
+                            <i data-lucide="camera" class="w-8 h-8 mr-3 text-blue-600"></i>
+                            Galleria Fotografica
+                        </h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <?php foreach (array_slice($galleryImages, 0, 6) as $image): ?>
+                            <a href="<?php echo htmlspecialchars($image); ?>" class="block group relative overflow-hidden rounded-xl">
+                                <img src="<?php echo htmlspecialchars($image); ?>" alt="Foto di <?php echo htmlspecialchars($city['name']); ?>" class="w-full h-full object-cover aspect-square group-hover:scale-105 transition-transform duration-300">
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <i data-lucide="zoom-in" class="w-10 h-10 text-white"></i>
                                 </div>
-                            </div>
-                            
-                            <a href="articolo.php?slug=<?php echo $article['slug']; ?>" 
-                               class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold transition-colors">
-                                <span>Leggi di più</span> <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+                            </a>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if (count($galleryImages) > 6): ?>
+                        <div class="text-center mt-8">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition-colors">
+                                Mostra tutte le <?php echo count($galleryImages); ?> foto
+                            </button>
+                        </div>
+                        <?php endif; ?>
+                    </section>
+                    <?php endif; ?>
+
+                    <!-- Articles by Category Section -->
+                    <section>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-8 flex items-center">
+                            <i data-lucide="compass" class="w-8 h-8 mr-3 text-blue-600"></i>
+                            Cosa fare a <?php echo htmlspecialchars($city['name']); ?>
+                        </h2>
+                        <div class="space-y-12">
+                            <?php foreach ($allCategories as $category): ?>
+                                <?php if (isset($articlesByCategory[$category['id']])): ?>
+                                    <div class="category-section">
+                                        <h3 class="text-2xl font-semibold text-gray-800 mb-6 border-b-2 border-blue-500 pb-2 flex items-center">
+                                            <span class="text-2xl mr-3"><?php echo $category['icon']; ?></span>
+                                            <?php echo htmlspecialchars($category['name']); ?>
+                                        </h3>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <?php foreach ($articlesByCategory[$category['id']] as $article): ?>
+                                            <article class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group">
+                                                <a href="articolo.php?slug=<?php echo $article['slug']; ?>" class="block">
+                                                    <div class="aspect-[16/9] bg-gray-200 overflow-hidden">
+                                                        <?php if ($article['featured_image']): ?>
+                                                        <img src="<?php echo htmlspecialchars($article['featured_image']); ?>" alt="<?php echo htmlspecialchars($article['title']); ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div class="p-6">
+                                                        <h4 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2"><?php echo htmlspecialchars($article['title']); ?></h4>
+                                                        <p class="text-gray-600 text-sm mb-4 line-clamp-3"><?php echo htmlspecialchars($article['excerpt']); ?></p>
+                                                        <div class="flex items-center text-xs text-gray-500">
+                                                            <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                                                            <span><?php echo formatDate($article['created_at']); ?></span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </article>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    </section>
+
+                </div>
+
+                <!-- Sidebar Column -->
+                <aside class="lg:col-span-1 space-y-12">
+                    <!-- Map Section -->
+                    <?php if ($googleMapsLink): ?>
+                    <section>
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                                <i data-lucide="map" class="w-6 h-6 mr-2 text-blue-600"></i>
+                                Mappa
+                            </h3>
+                            <div id="sidebar-map" class="w-full h-64 bg-gray-200 rounded-lg overflow-hidden mb-4"></div>
+                            <a href="<?php echo htmlspecialchars($googleMapsLink); ?>" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-colors">
+                                <i data-lucide="navigation" class="w-5 h-5 mr-2"></i>
+                                Ottieni Indicazioni
                             </a>
                         </div>
-                    </article>
-                    <?php endforeach; ?>
-                </div>
+                    </section>
+                    <?php endif; ?>
+                </aside>
             </div>
-            <?php else: ?>
-            <!-- Empty Articles State -->
-            <div class="text-center py-20">
-                <div class="text-6xl mb-6">📝</div>
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">
-                    Nessun articolo disponibile
-                </h2>
-                <p class="text-gray-600 mb-8 max-w-md mx-auto">
-                    Non ci sono ancora articoli per <?php echo htmlspecialchars($city['name']); ?>, ma ne stiamo preparando di fantastici!
-                </p>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <a href="citta.php" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition-colors">
-                        Esplora Altre Città
-                    </a>
-                    <a href="suggerisci.php" class="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-6 py-3 rounded-full font-semibold transition-colors">
-                        Suggerisci Contenuti
-                    </a>
-                </div>
-            </div>
-            <?php endif; ?>
-            
-            <!-- Related Cities -->
-            <?php if (!empty($relatedCities)): ?>
-            <div class="mt-16">
-                <h3 class="text-2xl font-bold text-gray-900 mb-8 text-center">
-                    <span>Altre Città di</span> <?php echo htmlspecialchars($city['province_name']); ?>
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <?php foreach (array_slice($relatedCities, 0, 4) as $relatedCity): 
-                        $relatedArticleCount = $db->getArticleCountByCity($relatedCity['id']);
-                    ?>
-                    <a href="citta-dettaglio.php?id=<?php echo $relatedCity['id']; ?>" 
-                       class="block bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all group">
-                        <div class="text-4xl mb-3">🏙️</div>
-                        <h4 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                            <?php echo htmlspecialchars($relatedCity['name']); ?>
-                        </h4>
-                        <p class="text-gray-600 text-sm mb-4">
-                            <?php echo htmlspecialchars(substr($relatedCity['description'] ?: 'Città di ' . $city['province_name'], 0, 80)); ?>...
-                        </p>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs text-gray-500">
-                                <?php echo $relatedArticleCount; ?> <span>articoli</span>
-                            </span>
-                            <div class="flex items-center text-blue-600 font-semibold">
-                                <span>Esplora</span> <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
-                            </div>
-                        </div>
-                    </a>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-            <?php endif; ?>
         </div>
     </main>
 
     <?php include 'includes/footer.php'; ?>
 
-    <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    
     <script src="assets/js/main.js"></script>
     <script>
-        // Inizializza Lucide icons
         lucide.createIcons();
 
-        // Animazioni scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('animate-fade-in-up');
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.bg-white').forEach(card => {
-            observer.observe(card);
-        });
-        
-        // Inizializza mappa città se presente
+        // Initialize sidebar map
+        <?php if ($city['latitude'] && $city['longitude']): ?>
         document.addEventListener('DOMContentLoaded', function() {
-            if (document.getElementById('city-map')) {
-                initCityMap();
-            }
-        });
-        
-        function initCityMap() {
-            <?php if ($city['latitude'] && $city['longitude']): ?>
-            const cityData = {
-                name: <?php echo json_encode($city['name']); ?>,
-                description: <?php echo json_encode($city['description'] ?: 'Città di ' . $city['province_name']); ?>,
-                latitude: <?php echo $city['latitude']; ?>,
-                longitude: <?php echo $city['longitude']; ?>,
-                province: <?php echo json_encode($city['province_name']); ?>
-            };
-            
-            const map = L.map('city-map').setView([cityData.latitude, cityData.longitude], 13);
-            
+            const map = L.map('sidebar-map').setView([<?php echo $city['latitude']; ?>, <?php echo $city['longitude']; ?>], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
-            
-            // Aggiungi marker per la città
-            const marker = L.marker([cityData.latitude, cityData.longitude]).addTo(map);
-            marker.bindPopup(`
-                <div class="p-2">
-                    <h3 class="font-bold text-lg">${cityData.name}</h3>
-                    <p class="text-gray-600 mb-2">${cityData.description}</p>
-                    <p class="text-sm text-gray-500">Provincia di ${cityData.province}</p>
-                </div>
-            `).openPopup();
-            <?php else: ?>
-            document.getElementById('city-map').innerHTML = `
-                <div class="w-full h-full flex items-center justify-center text-gray-500">
-                    <div class="text-center">
-                        <i data-lucide="map-off" class="w-16 h-16 mx-auto mb-4"></i>
-                        <p>Mappa non disponibile per questa città</p>
-                    </div>
-                </div>
-            `;
-            lucide.createIcons();
-            <?php endif; ?>
-        }
+            L.marker([<?php echo $city['latitude']; ?>, <?php echo $city['longitude']; ?>]).addTo(map)
+                .bindPopup('<?php echo htmlspecialchars($city['name']); ?>')
+                .openPopup();
+        });
+        <?php endif; ?>
     </script>
 </body>
 </html>
