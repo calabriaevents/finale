@@ -39,13 +39,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = $_POST['city_name'] ?? '';
         $province_id = $_POST['city_province_id'] ?? '';
         $description = $_POST['city_description'] ?? '';
+        $hero_subtitle = $_POST['hero_subtitle'] ?? '';
+        $google_maps_link = $_POST['google_maps_link'] ?? '';
+        $events_app_link = $_POST['events_app_link'] ?? '';
+        $is_featured = isset($_POST['is_featured']) ? 1 : 0;
         $latitude = !empty($_POST['city_latitude']) ? (float)$_POST['city_latitude'] : null;
         $longitude = !empty($_POST['city_longitude']) ? (float)$_POST['city_longitude'] : null;
+        
+        // Gestione hero image
+        $hero_image = $_POST['existing_hero_image'] ?? null;
+        if (isset($_FILES['hero_image']) && $_FILES['hero_image']['error'] === UPLOAD_ERR_OK) {
+            $upload_dir = '../uploads/cities/hero/';
+            if (!file_exists($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+            $filename = uniqid() . '-' . basename($_FILES['hero_image']['name']);
+            $target_file = $upload_dir . $filename;
+            if (move_uploaded_file($_FILES['hero_image']['tmp_name'], $target_file)) {
+                $hero_image = 'uploads/cities/hero/' . $filename;
+            }
+        }
+        
+        // Gestione galleria (aggiungeremo la logica per caricare multiple immagini)
+        $gallery_images = $_POST['existing_gallery_images'] ?? '[]';
 
         if ($action === 'edit' && $id) {
-            $db->updateCity($id, $name, $province_id, $description, $latitude, $longitude);
+            $db->updateCityExtended($id, $name, $province_id, $description, $latitude, $longitude, 
+                                  $hero_image, $hero_subtitle, $gallery_images, $google_maps_link, 
+                                  $events_app_link, $is_featured);
         } else {
-            $db->createCity($name, $province_id, $description, $latitude, $longitude);
+            $db->createCityExtended($name, $province_id, $description, $latitude, $longitude, 
+                                  $hero_image, $hero_subtitle, $gallery_images, $google_maps_link, 
+                                  $events_app_link, $is_featured);
         }
     }
     
@@ -258,76 +283,228 @@ if ($action === 'delete' && $id) {
                             $cityData = $db->getCityById($id);
                         }
                     ?>
-                    <div class="max-w-2xl">
-                        <div class="flex items-center mb-6">
-                            <a href="?entity=cities" class="text-gray-600 hover:text-gray-800 mr-4">
-                                <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                            </a>
-                            <h2 class="text-lg font-semibold"><?php echo $action === 'edit' ? 'Modifica Città' : 'Nuova Città'; ?></h2>
+                    <div class="max-w-6xl mx-auto">
+                        <div class="flex items-center justify-between mb-8">
+                            <div class="flex items-center">
+                                <a href="?entity=cities" class="text-gray-600 hover:text-gray-800 mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                                </a>
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-900"><?php echo $action === 'edit' ? '✨ Modifica Città' : '🌟 Nuova Città'; ?></h2>
+                                    <p class="text-gray-600 mt-1">Crea un'esperienza coinvolgente per i visitatori</p>
+                                </div>
+                            </div>
+                            <?php if ($action === 'edit' && $cityData): ?>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                    ID: <?php echo $cityData['id']; ?>
+                                </span>
+                                <a href="../citta-dettaglio.php?id=<?php echo $cityData['id']; ?>" target="_blank" 
+                                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                    <i data-lucide="external-link" class="w-4 h-4 inline mr-1"></i>
+                                    Anteprima
+                                </a>
+                            </div>
+                            <?php endif; ?>
                         </div>
                         
-                        <form action="?entity=cities&action=<?php echo $action; ?><?php if ($id) echo '&id='.$id; ?>" method="POST" class="space-y-6">
-                            <div>
-                                <label for="city_name" class="block text-sm font-medium text-gray-700 mb-2">Nome Città *</label>
-                                <input type="text" name="city_name" id="city_name" required 
-                                       value="<?php echo htmlspecialchars($cityData['name'] ?? ''); ?>"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            </div>
-                            
-                            <div>
-                                <label for="city_province_id" class="block text-sm font-medium text-gray-700 mb-2">Provincia *</label>
-                                <select name="city_province_id" id="city_province_id" required 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option value="">Seleziona una provincia</option>
-                                    <?php 
-                                    $provinces = $db->getProvinces();
-                                    foreach ($provinces as $prov): 
-                                    ?>
-                                    <option value="<?php echo $prov['id']; ?>" <?php echo (isset($cityData['province_id']) && $cityData['province_id'] == $prov['id']) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($prov['name']); ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label for="city_description" class="block text-sm font-medium text-gray-700 mb-2">Descrizione</label>
-                                <textarea name="city_description" id="city_description" rows="3" 
-                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                                          placeholder="Breve descrizione della città..."><?php echo htmlspecialchars($cityData['description'] ?? ''); ?></textarea>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="city_latitude" class="block text-sm font-medium text-gray-700 mb-2">Latitudine</label>
-                                    <input type="number" name="city_latitude" id="city_latitude" step="any" 
-                                           value="<?php echo $cityData['latitude'] ?? ''; ?>"
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                                           placeholder="es. 39.0847">
+                        <form action="?entity=cities&action=<?php echo $action; ?><?php if ($id) echo '&id='.$id; ?>" method="POST" enctype="multipart/form-data" class="space-y-8">
+                            <!-- Basic Info Section -->
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i data-lucide="map-pin" class="w-5 h-5 text-blue-600"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Informazioni Base</h3>
                                 </div>
-                                <div>
-                                    <label for="city_longitude" class="block text-sm font-medium text-gray-700 mb-2">Longitudine</label>
-                                    <input type="number" name="city_longitude" id="city_longitude" step="any" 
-                                           value="<?php echo $cityData['longitude'] ?? ''; ?>"
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                                           placeholder="es. 17.1252">
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="city_name" class="block text-sm font-medium text-gray-700 mb-2">Nome Città *</label>
+                                        <input type="text" name="city_name" id="city_name" required 
+                                               value="<?php echo htmlspecialchars($cityData['name'] ?? ''); ?>"
+                                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                               placeholder="es. Tropea">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="city_province_id" class="block text-sm font-medium text-gray-700 mb-2">Provincia *</label>
+                                        <select name="city_province_id" id="city_province_id" required 
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="">Seleziona una provincia</option>
+                                            <?php 
+                                            $provinces = $db->getProvinces();
+                                            foreach ($provinces as $prov): 
+                                            ?>
+                                            <option value="<?php echo $prov['id']; ?>" <?php echo (isset($cityData['province_id']) && $cityData['province_id'] == $prov['id']) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($prov['name']); ?>
+                                            </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <div class="flex items-center mb-2">
+                                        <label for="is_featured" class="flex items-center cursor-pointer">
+                                            <input type="checkbox" name="is_featured" id="is_featured" 
+                                                   class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 mr-3"
+                                                   <?php echo (isset($cityData['is_featured']) && $cityData['is_featured']) ? 'checked' : ''; ?>>
+                                            <span class="text-sm font-medium text-gray-700">⭐ Città in evidenza</span>
+                                        </label>
+                                    </div>
+                                    <p class="text-sm text-gray-500">Le città in evidenza vengono mostrate in posizioni privilegiate</p>
                                 </div>
                             </div>
                             
-                            <div class="bg-blue-50 p-4 rounded-lg">
-                                <h4 class="font-medium text-blue-900 mb-2">💡 Suggerimenti per le Coordinate</h4>
-                                <ul class="text-blue-700 text-sm space-y-1">
-                                    <li>• Usa Google Maps per trovare le coordinate precise</li>
-                                    <li>• Clic destro sulla mappa → "Cosa c'è qui?" per vedere lat/lng</li>
-                                    <li>• Le coordinate sono opzionali ma utili per mappe e geolocalizzazione</li>
-                                </ul>
+                            <!-- Hero Section -->
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i data-lucide="image" class="w-5 h-5 text-purple-600"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Sezione Hero</h3>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="city_description" class="block text-sm font-medium text-gray-700 mb-2">Descrizione Principale</label>
+                                        <textarea name="city_description" id="city_description" rows="4" 
+                                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                                  placeholder="Descrizione coinvolgente della città che catturi l'attenzione..."><?php echo htmlspecialchars($cityData['description'] ?? ''); ?></textarea>
+                                        <p class="text-sm text-gray-500 mt-1">Questa sarà la descrizione principale mostrata nella sezione hero</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="hero_subtitle" class="block text-sm font-medium text-gray-700 mb-2">Sottotitolo Hero</label>
+                                        <input type="text" name="hero_subtitle" id="hero_subtitle" 
+                                               value="<?php echo htmlspecialchars($cityData['hero_subtitle'] ?? ''); ?>"
+                                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                               placeholder="es. Perla del Tirreno">
+                                        <p class="text-sm text-gray-500 mt-1">Frase accattivante sotto il titolo principale</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <label for="hero_image" class="block text-sm font-medium text-gray-700 mb-2">Immagine Hero</label>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors" id="hero-upload-area">
+                                        <input type="file" name="hero_image" id="hero_image" accept="image/*" class="hidden" onchange="previewHeroImage(this)">
+                                        
+                                        <?php if (isset($cityData['hero_image']) && $cityData['hero_image']): ?>
+                                        <div id="existing-hero-image">
+                                            <img src="../<?php echo htmlspecialchars($cityData['hero_image']); ?>" 
+                                                 alt="Hero image" class="max-w-full max-h-48 mx-auto rounded-lg shadow-sm mb-4">
+                                            <p class="text-sm text-gray-600 mb-4">Immagine corrente</p>
+                                            <input type="hidden" name="existing_hero_image" value="<?php echo htmlspecialchars($cityData['hero_image']); ?>">
+                                        </div>
+                                        <?php endif; ?>
+                                        
+                                        <div id="hero-upload-prompt" <?php echo (isset($cityData['hero_image']) && $cityData['hero_image']) ? 'class="hidden"' : ''; ?>>
+                                            <i data-lucide="upload" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                                            <p class="text-gray-600 mb-2">Carica l'immagine principale della città</p>
+                                            <p class="text-sm text-gray-500 mb-4">PNG, JPG, WebP fino a 5MB - Risoluzione consigliata: 1920x1080</p>
+                                            <button type="button" onclick="document.getElementById('hero_image').click()" 
+                                                    class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors">
+                                                Seleziona Immagine
+                                            </button>
+                                        </div>
+                                        
+                                        <div id="hero-image-preview" class="hidden">
+                                            <img id="hero-preview-img" src="" alt="Anteprima" class="max-w-full max-h-64 mx-auto rounded-lg shadow-sm mb-4">
+                                            <div class="flex justify-center space-x-4">
+                                                <button type="button" onclick="removeHeroPreview()" 
+                                                        class="text-red-600 hover:text-red-700 font-semibold">
+                                                    Rimuovi
+                                                </button>
+                                                <button type="button" onclick="document.getElementById('hero_image').click()" 
+                                                        class="text-blue-600 hover:text-blue-700 font-semibold">
+                                                    Cambia
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <div class="flex justify-end space-x-4">
-                                <a href="?entity=cities" class="px-4 py-2 text-gray-600 hover:text-gray-800">Annulla</a>
-                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold">
-                                    <?php echo $action === 'edit' ? 'Aggiorna' : 'Crea'; ?> Città
-                                </button>
+                            <!-- Location & Links Section -->
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i data-lucide="navigation" class="w-5 h-5 text-green-600"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Posizione e Collegamenti</h3>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="city_latitude" class="block text-sm font-medium text-gray-700 mb-2">Latitudine</label>
+                                        <input type="number" name="city_latitude" id="city_latitude" step="any" 
+                                               value="<?php echo $cityData['latitude'] ?? ''; ?>"
+                                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                               placeholder="es. 39.0847">
+                                    </div>
+                                    <div>
+                                        <label for="city_longitude" class="block text-sm font-medium text-gray-700 mb-2">Longitudine</label>
+                                        <input type="number" name="city_longitude" id="city_longitude" step="any" 
+                                               value="<?php echo $cityData['longitude'] ?? ''; ?>"
+                                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                               placeholder="es. 17.1252">
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <label for="google_maps_link" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i data-lucide="map" class="w-4 h-4 inline mr-1"></i>
+                                        Link Google Maps (Come Arrivare)
+                                    </label>
+                                    <input type="url" name="google_maps_link" id="google_maps_link" 
+                                           value="<?php echo htmlspecialchars($cityData['google_maps_link'] ?? ''); ?>"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                           placeholder="https://maps.google.com/...">
+                                    <p class="text-sm text-gray-500 mt-1">Link diretto per navigazione GPS alla città</p>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <label for="events_app_link" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
+                                        Link App Eventi
+                                    </label>
+                                    <input type="url" name="events_app_link" id="events_app_link" 
+                                           value="<?php echo htmlspecialchars($cityData['events_app_link'] ?? ''); ?>"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                           placeholder="https://app-eventi.calabriaevents.it/...">
+                                    <p class="text-sm text-gray-500 mt-1">Link all'app degli eventi per questa città</p>
+                                </div>
+                                
+                                <div class="bg-green-50 p-4 rounded-lg mt-6">
+                                    <h4 class="font-medium text-green-900 mb-2">💡 Suggerimenti</h4>
+                                    <ul class="text-green-700 text-sm space-y-1">
+                                        <li>• <strong>Coordinate:</strong> Usa Google Maps → clic destro → "Cosa c'è qui?"</li>
+                                        <li>• <strong>Google Maps:</strong> Condividi → Incorpora una mappa → copia il link</li>
+                                        <li>• <strong>App Eventi:</strong> Link diretto alla sezione eventi della città</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 pt-6 border-t border-gray-200">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i data-lucide="save" class="w-4 h-4 mr-1"></i>
+                                    <span>Tutte le modifiche vengono salvate automaticamente</span>
+                                </div>
+                                
+                                <div class="flex space-x-4">
+                                    <a href="?entity=cities" 
+                                       class="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <i data-lucide="x" class="w-4 h-4 inline mr-1"></i>
+                                        Annulla
+                                    </a>
+                                    <button type="submit" 
+                                            class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 shadow-lg">
+                                        <i data-lucide="<?php echo $action === 'edit' ? 'refresh-cw' : 'plus'; ?>" class="w-4 h-4 inline mr-2"></i>
+                                        <?php echo $action === 'edit' ? '✨ Aggiorna Città' : '🌟 Crea Città'; ?>
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -464,7 +641,64 @@ if ($action === 'delete' && $id) {
     <script>
         lucide.createIcons();
         
-        // Funzioni per l'upload delle immagini
+        // Funzioni per l'upload delle immagini hero
+        function previewHeroImage(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // Validazione lato client
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                
+                if (!allowedTypes.includes(file.type.toLowerCase())) {
+                    alert('Tipo di file non supportato. Utilizzare JPEG, PNG o WebP.');
+                    input.value = '';
+                    return;
+                }
+                
+                if (file.size > maxSize) {
+                    alert('Il file è troppo grande. Dimensione massima: 5MB.');
+                    input.value = '';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Nascondi il prompt di upload e l'immagine esistente
+                    document.getElementById('hero-upload-prompt').classList.add('hidden');
+                    const existingImage = document.getElementById('existing-hero-image');
+                    if (existingImage) {
+                        existingImage.classList.add('hidden');
+                    }
+                    
+                    // Mostra la preview
+                    const preview = document.getElementById('hero-image-preview');
+                    const previewImg = document.getElementById('hero-preview-img');
+                    
+                    previewImg.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function removeHeroPreview() {
+            // Reset input file
+            document.getElementById('hero_image').value = '';
+            
+            // Nascondi preview
+            document.getElementById('hero-image-preview').classList.add('hidden');
+            
+            // Mostra di nuovo il prompt o l'immagine esistente
+            const existingImage = document.getElementById('existing-hero-image');
+            if (existingImage && !existingImage.classList.contains('hidden')) {
+                existingImage.classList.remove('hidden');
+            } else {
+                document.getElementById('hero-upload-prompt').classList.remove('hidden');
+            }
+        }
+        
+        // Funzioni per l'upload delle immagini standard
         function previewImage(input) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
@@ -524,7 +758,32 @@ if ($action === 'delete' && $id) {
             }
         }
         
-        // Drag & Drop functionality
+        // Drag & Drop functionality per hero image
+        const heroUploadArea = document.getElementById('hero-upload-area');
+        if (heroUploadArea) {
+            heroUploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                heroUploadArea.classList.add('border-purple-500', 'bg-purple-50');
+            });
+            
+            heroUploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                heroUploadArea.classList.remove('border-purple-500', 'bg-purple-50');
+            });
+            
+            heroUploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                heroUploadArea.classList.remove('border-purple-500', 'bg-purple-50');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    document.getElementById('hero_image').files = files;
+                    previewHeroImage(document.getElementById('hero_image'));
+                }
+            });
+        }
+        
+        // Drag & Drop functionality standard
         const uploadArea = document.getElementById('upload-area');
         if (uploadArea) {
             uploadArea.addEventListener('dragover', function(e) {
@@ -543,8 +802,11 @@ if ($action === 'delete' && $id) {
                 
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
-                    document.getElementById('image').files = files;
-                    previewImage(document.getElementById('image'));
+                    const imageInput = document.getElementById('image');
+                    if (imageInput) {
+                        imageInput.files = files;
+                        previewImage(imageInput);
+                    }
                 }
             });
         }

@@ -189,6 +189,76 @@ class Database {
         return $stmt->execute([$id]);
     }
 
+    // Nuovi metodi per città estese
+    public function createCityExtended($name, $province_id, $description = '', $latitude = null, $longitude = null, 
+                                    $hero_image = null, $hero_subtitle = '', $gallery_images = '[]', 
+                                    $google_maps_link = '', $events_app_link = '', $is_featured = 0) {
+        if (!$this->isConnected()) { return false; }
+        $stmt = $this->pdo->prepare('
+            INSERT INTO cities (name, province_id, description, latitude, longitude, hero_image, 
+                              hero_subtitle, gallery_images, google_maps_link, events_app_link, 
+                              is_featured, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        ');
+        $result = $stmt->execute([$name, $province_id, $description, $latitude, $longitude, 
+                                 $hero_image, $hero_subtitle, $gallery_images, $google_maps_link, 
+                                 $events_app_link, $is_featured]);
+        return $result ? $this->pdo->lastInsertId() : false;
+    }
+
+    public function updateCityExtended($id, $name, $province_id, $description = '', $latitude = null, $longitude = null, 
+                                     $hero_image = null, $hero_subtitle = '', $gallery_images = '[]', 
+                                     $google_maps_link = '', $events_app_link = '', $is_featured = 0) {
+        if (!$this->isConnected()) { return false; }
+        
+        // Build dynamic SQL based on what fields are provided
+        $fields = ['name = ?', 'province_id = ?', 'description = ?', 'latitude = ?', 'longitude = ?', 
+                   'hero_subtitle = ?', 'gallery_images = ?', 'google_maps_link = ?', 
+                   'events_app_link = ?', 'is_featured = ?', 'updated_at = NOW()'];
+        $params = [$name, $province_id, $description, $latitude, $longitude, 
+                  $hero_subtitle, $gallery_images, $google_maps_link, 
+                  $events_app_link, $is_featured];
+        
+        if ($hero_image !== null) {
+            $fields[] = 'hero_image = ?';
+            $params[] = $hero_image;
+        }
+        
+        $params[] = $id; // Add ID at the end for WHERE clause
+        
+        $sql = 'UPDATE cities SET ' . implode(', ', $fields) . ' WHERE id = ?';
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($params);
+    }
+
+    // Metodo per ottenere città con tutti i campi estesi
+    public function getCityExtendedById($id) {
+        if (!$this->isConnected()) { return null; }
+        $stmt = $this->pdo->prepare('
+            SELECT c.*, p.name as province_name, p.id as province_id 
+            FROM cities c 
+            LEFT JOIN provinces p ON c.province_id = p.id 
+            WHERE c.id = ?
+        ');
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+
+    // Metodo per ottenere città in evidenza
+    public function getFeaturedCities($limit = 6) {
+        if (!$this->isConnected()) { return []; }
+        $stmt = $this->pdo->prepare('
+            SELECT c.*, p.name as province_name 
+            FROM cities c 
+            LEFT JOIN provinces p ON c.province_id = p.id 
+            WHERE c.is_featured = 1 
+            ORDER BY c.updated_at DESC 
+            LIMIT ?
+        ');
+        $stmt->execute([$limit]);
+        return $stmt->fetchAll();
+    }
+
     // Metodi per Articoli
     public function getArticles($limit = null, $offset = 0, $onlyPublished = true) {
         if (!$this->isConnected()) { return []; }
