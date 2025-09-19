@@ -200,7 +200,7 @@ foreach ($homeSections as $section) {
                     </a>
                     <?php endif; ?>
                     
-                    <a href="<?php echo htmlspecialchars($eventData['suggerisci_evento_link'] ?? '/suggerisci-evento.php'); ?>" class="inline-flex items-center justify-center px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-full font-semibold transition-colors">
+                    <a href="<?php echo htmlspecialchars($eventData['suggerisci_evento_link'] ?? 'suggerisci-evento.php'); ?>" class="inline-flex items-center justify-center px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-full font-semibold transition-colors">
                         <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i>
                         <span>Suggerisci Evento</span>
                     </a>

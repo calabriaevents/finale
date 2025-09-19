@@ -13,6 +13,7 @@ $db = new Database();
 // Carica impostazioni admin
 $contact_phone = $db->getSetting('contact_phone') ?: '+39 000 000 0000';
 $contact_text = $db->getSetting('contact_text') ?: 'Per qualsiasi modifica alla pagina personalizzata, contattaci:';
+$contact_hours = $db->getSetting('contact_hours') ?: 'Disponibili dal Lunedì al Venerdì, 9:00-18:00';
 
 $user_id = $_SESSION['user_id'] ?? null;
 $business_id = $_SESSION['business_id'] ?? null;
@@ -580,7 +581,7 @@ if ($current_subscription && !empty($current_subscription['end_date'])) {
                             <?php echo htmlspecialchars($contact_text); ?>
                         </p>
                         <p class="font-bold text-lg"><?php echo htmlspecialchars($contact_phone); ?></p>
-                        <p class="text-xs text-blue-100 mt-2">Disponibili dal Lunedì al Venerdì, 9:00-18:00</p>
+                        <p class="text-xs text-blue-100 mt-2"><?php echo htmlspecialchars($contact_hours); ?></p>
                     </div>
                 </div>
             </div>
