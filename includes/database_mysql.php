@@ -599,14 +599,10 @@ class Database {
     public function getUserUploads($status = null, $type = null) {
         if (!$this->isConnected()) { return []; }
         
-        // Se richiede tipo 'city', restituisco array vuoto perché city_id non esiste
-        if ($type === 'city') {
-            return [];
-        }
-        
-        // Rimuovo LEFT JOIN con cities perché u.city_id non esiste
-        $sql = 'SELECT u.*, a.title as article_title FROM user_uploads u 
-                LEFT JOIN articles a ON u.article_id = a.id';
+        // JOIN con articles per gli articoli e provinces per le città
+        $sql = 'SELECT u.*, a.title as article_title, p.name as city_name FROM user_uploads u 
+                LEFT JOIN articles a ON u.article_id = a.id
+                LEFT JOIN provinces p ON u.province_id = p.id';
         $params = [];
         $conditions = [];
         
@@ -617,6 +613,8 @@ class Database {
         
         if ($type === 'article') {
             $conditions[] = 'u.article_id IS NOT NULL';
+        } elseif ($type === 'city') {
+            $conditions[] = 'u.province_id IS NOT NULL';
         }
         
         if ($conditions) {
@@ -631,27 +629,30 @@ class Database {
 
     public function getUserUploadById($id) {
         if (!$this->isConnected()) { return null; }
-        // Rimuovo LEFT JOIN con cities perché u.city_id non esiste
-        $stmt = $this->pdo->prepare('SELECT u.*, a.title as article_title FROM user_uploads u 
+        // JOIN con articles per gli articoli e provinces per le città
+        $stmt = $this->pdo->prepare('SELECT u.*, a.title as article_title, p.name as city_name FROM user_uploads u 
                                     LEFT JOIN articles a ON u.article_id = a.id 
+                                    LEFT JOIN provinces p ON u.province_id = p.id
                                     WHERE u.id = ?');
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
 
-    public function getApprovedCityPhotos($city_id) {
+    public function getApprovedCityPhotos($province_id) {
         if (!$this->isConnected()) { return []; }
-        // Colonna city_id non esiste nella tabella user_uploads - restituisco array vuoto
-        return [];
+        // Recupera foto approvate per una specifica provincia/città
+        $stmt = $this->pdo->prepare('SELECT * FROM user_uploads WHERE province_id = ? AND status = "approved" ORDER BY created_at DESC');
+        $stmt->execute([$province_id]);
+        return $stmt->fetchAll();
     }
 
-    public function createCityPhotoUpload($city_id, $user_name, $user_email, $image_path, $original_filename, $description = null) {
+    public function createCityPhotoUpload($province_id, $user_name, $user_email, $image_path, $original_filename, $description = null) {
         if (!$this->isConnected()) { return false; }
         $status = 'pending';
-        // Rimuovo city_id perché la colonna non esiste nella tabella user_uploads
-        $sql = "INSERT INTO user_uploads (user_name, user_email, image_path, original_filename, description, status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())";
+        // Salva foto con province_id per associarla alla città/provincia
+        $sql = "INSERT INTO user_uploads (province_id, user_name, user_email, image_path, original_filename, description, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
         $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([$user_name, $user_email, $image_path, $original_filename, $description, $status]);
+        return $stmt->execute([$province_id, $user_name, $user_email, $image_path, $original_filename, $description, $status]);
     }
 
     public function updateUserUploadStatus($id, $status, $admin_notes = null) {

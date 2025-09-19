@@ -90,7 +90,8 @@ function getNiceFieldName($key) {
         'stripe_publishable_key' => 'Stripe - Publishable Key',
         'stripe_secret_key' => 'Stripe - Secret Key',
         'contact_phone' => 'Numero di Telefono Contatti',
-        'contact_text' => 'Testo Personalizzabile Contatti'
+        'contact_text' => 'Testo Personalizzabile Contatti',
+        'contact_hours' => 'Orario di Apertura Contatti'
     ];
     
     return $names[$key] ?? ucfirst(str_replace('_', ' ', $key));
@@ -116,7 +117,8 @@ function getFieldDescription($key) {
         'stripe_publishable_key' => 'Chiave pubblica Stripe per pagamenti',
         'stripe_secret_key' => 'Chiave privata Stripe (mantenere segreta!)',
         'contact_phone' => 'Numero di telefono mostrato nella dashboard utenti e nelle pagine di contatto',
-        'contact_text' => 'Testo personalizzabile mostrato nella sezione contatti della dashboard utenti'
+        'contact_text' => 'Testo personalizzabile mostrato nella sezione contatti della dashboard utenti',
+        'contact_hours' => 'Orario di disponibilità per l\'assistenza (es: Disponibili dal Lunedì al Venerdì, 9:00-18:00)'
     ];
     
     return $descriptions[$key] ?? '';
