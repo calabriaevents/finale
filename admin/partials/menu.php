@@ -19,6 +19,7 @@ $menuItems = [
     ['file' => 'abbonamenti.php', 'icon' => 'credit-card', 'label' => 'Abbonamenti'],
     ['file' => 'utenti.php', 'icon' => 'users', 'label' => 'Utenti'],
     ['file' => 'database.php', 'icon' => 'database', 'label' => 'Monitoraggio DB'],
+    ['file' => 'manutenzione.php', 'icon' => 'wrench', 'label' => 'Modalità Manutenzione'],
     ['file' => 'impostazioni.php', 'icon' => 'settings', 'label' => 'Impostazioni'],
 ];
 ?>

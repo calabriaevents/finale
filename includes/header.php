@@ -1,6 +1,9 @@
 <?php
 // Header comune per tutte le pagine
 require_once __DIR__ . '/config.php';
+
+// Controllo modalità manutenzione (solo per pagine pubbliche)
+require_once __DIR__ . '/maintenance_check.php';
 ?>
 <!-- Header -->
 <header class="bg-gradient-to-r from-blue-600 via-teal-500 to-yellow-500 text-white">
@@ -45,6 +48,7 @@ require_once __DIR__ . '/config.php';
                         <a href="index.php" class="hover:text-yellow-300 transition-colors font-medium">Home</a>
                         <a href="categorie.php" class="hover:text-yellow-300 transition-colors font-medium">Categorie</a>
                         <a href="province.php" class="hover:text-yellow-300 transition-colors font-medium">Province</a>
+                        <a href="citta.php" class="hover:text-yellow-300 transition-colors font-medium">Città</a>
                         <a href="mappa.php" class="hover:text-yellow-300 transition-colors font-medium">Mappa</a>
                         <a href="iscrizione-attivita.php" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-full transition-colors font-medium">Iscrivi la tua attività</a>
                         <a href="admin/" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full transition-colors font-medium">Admin</a>
@@ -117,6 +121,7 @@ require_once __DIR__ . '/config.php';
                 <a href="index.php" class="block py-2 hover:text-yellow-300 transition-colors">Home</a>
                 <a href="categorie.php" class="block py-2 hover:text-yellow-300 transition-colors">Categorie</a>
                 <a href="province.php" class="block py-2 hover:text-yellow-300 transition-colors">Province</a>
+                <a href="citta.php" class="block py-2 hover:text-yellow-300 transition-colors">Città</a>
                 <a href="mappa.php" class="block py-2 hover:text-yellow-300 transition-colors">Mappa</a>
                 <a href="iscrizione-attivita.php" class="block py-2 hover:text-yellow-300 transition-colors">Iscrivi la tua attività</a>
                 
