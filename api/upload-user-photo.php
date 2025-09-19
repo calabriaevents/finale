@@ -87,7 +87,7 @@ try {
     // Salva nel database
     $db = new Database();
     
-    $stmt = $db->connection->prepare("
+    $stmt = $db->pdo->prepare("
         INSERT INTO user_uploads (
             article_id, 
             province_id, 
@@ -101,8 +101,7 @@ try {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
     ");
     
-    $stmt->bind_param(
-        'iisssss', 
+    if (!$stmt->execute([
         $article_id, 
         $province_id, 
         $user_name, 
@@ -110,15 +109,13 @@ try {
         $relativePath, 
         $file['name'], 
         $description
-    );
-    
-    if (!$stmt->execute()) {
+    ])) {
         // Rimuovi il file se il database fallisce
         unlink($filePath);
         throw new Exception('Errore nel salvataggio dei dati');
     }
     
-    $uploadId = $db->connection->insert_id;
+    $uploadId = $db->pdo->lastInsertId();
     
     echo json_encode([
         'success' => true,
