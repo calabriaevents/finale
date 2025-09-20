@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 echo "🔧 Applicazione Migrazione City Improvements 2025\n\n";
 
 // Carica configurazione
-require_once 'config.php';
+require_once 'includes/config.php';
 require_once 'includes/database_mysql.php';
 
 try {
