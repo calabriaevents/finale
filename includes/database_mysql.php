@@ -576,23 +576,35 @@ class Database {
     // Metodi per Commenti Città
     public function getCityComments($cityId = null, $status = null) {
         if (!$this->isConnected()) { return []; }
-        // Colonna city_id non esiste nella tabella comments - restituisco array vuoto
-        return [];
+        $sql = 'SELECT * FROM comments WHERE 1=1';
+        $params = [];
+        if ($cityId) {
+            $sql .= ' AND city_id = ?';
+            $params[] = $cityId;
+        }
+        if ($status) {
+            $sql .= ' AND status = ?';
+            $params[] = $status;
+        }
+        $sql .= ' ORDER BY created_at DESC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
     public function getApprovedCommentsByCityId($city_id) {
         if (!$this->isConnected()) { return []; }
-        // Colonna city_id non esiste nella tabella comments - restituisco array vuoto
-        return [];
+        $stmt = $this->pdo->prepare('SELECT * FROM comments WHERE city_id = ? AND status = "approved" ORDER BY created_at DESC');
+        $stmt->execute([$city_id]);
+        return $stmt->fetchAll();
     }
 
     public function createCityComment($city_id, $author_name, $author_email, $content, $rating = null) {
         if (!$this->isConnected()) { return false; }
         $status = 'pending';
-        // Rimuovo city_id perché la colonna non esiste nella tabella comments
-        $sql = "INSERT INTO comments (author_name, author_email, content, rating, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())";
+        $sql = "INSERT INTO comments (city_id, article_id, author_name, author_email, content, rating, status, created_at) VALUES (?, NULL, ?, ?, ?, ?, ?, NOW())";
         $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([$author_name, $author_email, $content, $rating, $status]);
+        return $stmt->execute([$city_id, $author_name, $author_email, $content, $rating, $status]);
     }
 
     // Metodi per User Uploads
